@@ -5,6 +5,7 @@
 
 import { scanner } from './scanner';
 import { chromeStorage } from '@/storage/chrome-storage';
+import { indexedDB } from '@/storage/indexedDB';
 import { notificationManager } from '@/utils/notification';
 import { MESSAGE_TYPES, CONTEXT_MENU_IDS } from '@/config/constants';
 
@@ -21,7 +22,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
     // 打开欢迎页面
     chrome.tabs.create({
-      url: chrome.runtime.getURL('popup/index.html'),
+      url: chrome.runtime.getURL('popup.html'),
     });
   } else if (details.reason === 'update') {
     console.log('SensInfo Finder V3 updated');
@@ -245,6 +246,3 @@ scanner.initialize().then(() => {
 }).catch((error) => {
   console.error('Failed to initialize scanner:', error);
 });
-
-// 导入 indexedDB 供消息处理器使用
-import { indexedDB } from '@/storage/indexedDB';
