@@ -24,6 +24,7 @@ export default defineConfig({
       '@/config': path.resolve(__dirname, './src/config'),
     },
   },
+  base: './',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
