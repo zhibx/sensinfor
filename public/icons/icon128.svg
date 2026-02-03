@@ -1,0 +1,5 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#3B82F6" rx="16"/>
+  <text x="64" y="85" font-size="48" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">SI</text>
+  <text x="64" y="105" font-size="12" fill="white" text-anchor="middle" font-family="Arial" opacity="0.8">Finder</text>
+</svg>
