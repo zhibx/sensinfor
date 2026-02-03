@@ -89,7 +89,7 @@ export const FILE_EXTENSIONS = {
 export const REGEX_PATTERNS = {
   // API Key patterns
   AWS_ACCESS_KEY: /AKIA[0-9A-Z]{16}/gi,
-  AWS_SECRET_KEY: /(?i)aws(.{0,20})?['\"][0-9a-zA-Z\/+]{40}['\"])/gi,
+  AWS_SECRET_KEY: /aws(.{0,20})?['\"][0-9a-zA-Z\/+]{40}['\"]/gi,
   GOOGLE_API_KEY: /AIza[0-9A-Za-z\\-_]{35}/gi,
   GITHUB_TOKEN: /gh[ps]_[0-9a-zA-Z]{36}/gi,
   SLACK_TOKEN: /xox[baprs]-[0-9]{10,12}-[0-9]{10,12}-[0-9a-zA-Z]{24,32}/gi,

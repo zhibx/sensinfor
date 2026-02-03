@@ -304,8 +304,8 @@ class JSAnalyzerClass {
     const extractedData = this.analyze(code);
     const recommendations: string[] = [];
 
-    const hasSourceMap = (extractedData.sourceMaps?.length || 0) > 0;
-    const hasDebugCode = (extractedData.debugCode?.length || 0) > 0;
+    const hasSourceMap = (extractedData.sourceMaps && Array.isArray(extractedData.sourceMaps) && extractedData.sourceMaps.length > 0) || false;
+    const hasDebugCode = (extractedData.debugCode && Array.isArray(extractedData.debugCode) && extractedData.debugCode.length > 0) || false;
     const hasHardcodedSecrets = (extractedData.secrets?.length || 0) > 0;
     const isObfuscated = this.isObfuscated(code);
 

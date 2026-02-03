@@ -146,6 +146,7 @@ interface PieChartProps {
   data: {
     labels: string[];
     datasets: {
+      label?: string;
       data: number[];
       backgroundColor?: string[];
       borderColor?: string[];
@@ -164,6 +165,7 @@ interface DoughnutChartProps {
   data: {
     labels: string[];
     datasets: {
+      label?: string;
       data: number[];
       backgroundColor?: string[];
       borderColor?: string[];

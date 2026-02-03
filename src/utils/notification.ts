@@ -133,12 +133,13 @@ class NotificationManager {
    */
   async clearAll(): Promise<void> {
     try {
-      const notifications = await chrome.notifications.getAll();
-      for (const notificationId of Object.keys(notifications)) {
-        if (notificationId.startsWith(NOTIFICATION_PREFIX)) {
-          await this.clear(notificationId);
+      chrome.notifications.getAll((notifications) => {
+        for (const notificationId of Object.keys(notifications)) {
+          if (notificationId.startsWith(NOTIFICATION_PREFIX)) {
+            this.clear(notificationId);
+          }
         }
-      }
+      });
     } catch (error) {
       console.error('Failed to clear all notifications:', error);
     }

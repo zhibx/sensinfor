@@ -2,7 +2,8 @@
  * 检测规则类型定义
  */
 
-export type RuleSeverity = 'high' | 'medium' | 'low';
+export type RuleSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';
 export type RuleCategory =
   | 'leak'
   | 'backup'

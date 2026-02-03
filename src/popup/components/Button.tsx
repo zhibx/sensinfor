@@ -6,7 +6,7 @@ import React from 'react';
 import clsx from 'clsx';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'default';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   children: React.ReactNode;
@@ -29,6 +29,7 @@ export const Button: React.FC<ButtonProps> = ({
           'btn-primary': variant === 'primary',
           'btn-secondary': variant === 'secondary',
           'btn-danger': variant === 'danger',
+          'btn-default': variant === 'default',
           'btn-sm': size === 'sm',
           'opacity-50 cursor-not-allowed': disabled || loading,
         },

@@ -50,19 +50,19 @@ class ContentAnalyzerClass {
   /**
    * 分析 JSON 内容
    */
-  private analyzeJSON(content: string): ExtractedData {
+  private async analyzeJSON(content: string): Promise<ExtractedData> {
     try {
       const data = JSON.parse(content);
       return this.extractFromObject(data);
     } catch (error) {
-      return this.analyze(content);
+      return await this.analyze(content);
     }
   }
 
   /**
    * 分析 HTML 内容
    */
-  private analyzeHTML(content: string): ExtractedData {
+  private async analyzeHTML(content: string): Promise<ExtractedData> {
     const extractedData: ExtractedData = {};
 
     // 提取内联脚本
@@ -76,15 +76,15 @@ class ContentAnalyzerClass {
     // 分析脚本内容
     if (scripts.length > 0) {
       const scriptContent = scripts.join('\n');
-      Object.assign(extractedData, this.analyze(scriptContent));
+      Object.assign(extractedData, await this.analyze(scriptContent));
     }
 
     // 提取注释中的敏感信息
     const commentMatches = content.matchAll(/<!--([\s\S]*?)-->/g);
     for (const match of commentMatches) {
-      const commentData = this.analyze(match[1]);
+      const commentData = await this.analyze(match[1]);
       Object.keys(commentData).forEach((key) => {
-        if (commentData[key] && commentData[key].length > 0) {
+        if (commentData[key] && Array.isArray(commentData[key]) && commentData[key].length > 0) {
           extractedData[key] = [
             ...(extractedData[key] || []),
             ...commentData[key],
@@ -99,7 +99,7 @@ class ContentAnalyzerClass {
   /**
    * 从对象中提取敏感信息
    */
-  private extractFromObject(obj: unknown, path: string = ''): ExtractedData {
+  private async extractFromObject(obj: unknown, path: string = ''): Promise<ExtractedData> {
     const extractedData: ExtractedData = {};
 
     if (typeof obj !== 'object' || obj === null) {
@@ -130,9 +130,9 @@ class ContentAnalyzerClass {
 
       // 递归处理嵌套对象
       if (typeof value === 'object' && value !== null) {
-        const nested = this.extractFromObject(value, currentPath);
+        const nested = await this.extractFromObject(value, currentPath);
         Object.keys(nested).forEach((k) => {
-          if (nested[k] && nested[k].length > 0) {
+          if (nested[k] && Array.isArray(nested[k]) && nested[k].length > 0) {
             extractedData[k] = [...(extractedData[k] || []), ...nested[k]];
           }
         });
@@ -140,9 +140,9 @@ class ContentAnalyzerClass {
 
       // 分析字符串值
       if (typeof value === 'string') {
-        const stringData = this.analyze(value);
+        const stringData = await this.analyze(value);
         Object.keys(stringData).forEach((k) => {
-          if (stringData[k] && stringData[k].length > 0) {
+          if (stringData[k] && Array.isArray(stringData[k]) && stringData[k].length > 0) {
             extractedData[k] = [...(extractedData[k] || []), ...stringData[k]];
           }
         });
