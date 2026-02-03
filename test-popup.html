@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Popup</title>
+    <style>
+        body {
+            width: 400px;
+            height: 300px;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h2>扩展测试页面</h2>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        // 测试1: 基础HTML加载
+        addResult('✓ HTML已加载', 'success');
+
+        // 测试2: Chrome API可用性
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            addResult('✓ Chrome API可用', 'success');
+
+            // 测试3: 获取扩展ID
+            const extensionId = chrome.runtime.id;
+            addResult(`✓ 扩展ID: ${extensionId}`, 'success');
+
+            // 测试4: 尝试发送消息
+            chrome.runtime.sendMessage({ type: 'GET_CONFIG' }, (response) => {
+                if (chrome.runtime.lastError) {
+                    addResult(`✗ 消息发送失败: ${chrome.runtime.lastError.message}`, 'error');
+                } else if (response) {
+                    addResult('✓ Background通信正常', 'success');
+                } else {
+                    addResult('✗ Background无响应', 'error');
+                }
+            });
+
+        } else {
+            addResult('✗ Chrome API不可用', 'error');
+        }
+
+        // 测试5: 图标路径
+        try {
+            const iconUrl = chrome.runtime.getURL('icons/icon48.svg');
+            addResult(`✓ 图标路径: ${iconUrl}`, 'info');
+
+            // 尝试加载图标
+            fetch(iconUrl)
+                .then(res => {
+                    if (res.ok) {
+                        addResult('✓ 图标文件存在', 'success');
+                    } else {
+                        addResult(`✗ 图标加载失败: ${res.status}`, 'error');
+                    }
+                })
+                .catch(err => {
+                    addResult(`✗ 图标加载错误: ${err.message}`, 'error');
+                });
+        } catch (e) {
+            addResult(`✗ 获取图标路径失败: ${e.message}`, 'error');
+        }
+    </script>
+</body>
+</html>
