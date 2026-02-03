@@ -15,10 +15,14 @@ import {
   Tooltip,
   Legend,
   Filler,
+  BarController,
+  LineController,
+  DoughnutController,
+  PieController,
 } from 'chart.js';
 import { Chart as ChartJSInstance } from 'chart.js';
 
-// 注册 Chart.js 组件
+// 注册 Chart.js 组件和控制器
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,7 +33,11 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController,
+  LineController,
+  DoughnutController,
+  PieController
 );
 
 interface ChartProps {

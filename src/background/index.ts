@@ -70,10 +70,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         title: newEnabled ? '停止扫描器' : '启动扫描器',
       });
 
-      // 显示通知
+      // 显示通知 (使用空的data URL作为图标,因为Chrome不支持SVG)
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.svg',
+        iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
         title: 'SensInfo Finder',
         message: newEnabled ? '扫描器已启动' : '扫描器已停止',
       });
@@ -118,11 +118,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       return;
     }
 
-    // 更新图标状态 (使用现有图标)
-    chrome.action.setIcon({
-      path: 'icons/icon16.svg',
-      tabId,
-    });
+    // 更新图标状态 (注释掉setIcon,因为Chrome不支持SVG)
+    // chrome.action.setIcon({
+    //   path: 'icons/icon16.svg',
+    //   tabId,
+    // });
 
     // 开始扫描
     try {
@@ -133,11 +133,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.status === 'complete') {
-    // 恢复图标
-    chrome.action.setIcon({
-      path: 'icons/icon16.svg',
-      tabId,
-    });
+    // 恢复图标 (注释掉,因为Chrome不支持SVG)
+    // chrome.action.setIcon({
+    //   path: 'icons/icon16.svg',
+    //   tabId,
+    // });
   }
 });
 
