@@ -41,7 +41,7 @@ const App: React.FC = () => {
       <header className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icons/icon48.png" alt="Logo" className="w-8 h-8" />
+            <img src="/icons/icon48.svg" alt="Logo" className="w-8 h-8" />
             <div>
               <h1 className="text-lg font-bold text-gray-900">SensInfo Finder</h1>
               <p className="text-xs text-gray-500">敏感信息检测工具</p>

@@ -72,7 +72,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       // 显示通知
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png',
+        iconUrl: 'icons/icon48.svg',
         title: 'SensInfo Finder',
         message: newEnabled ? '扫描器已启动' : '扫描器已停止',
       });
@@ -117,9 +117,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       return;
     }
 
-    // 更新图标状态
+    // 更新图标状态 (使用现有图标)
     chrome.action.setIcon({
-      path: 'icons/icon16-scanning.png',
+      path: 'icons/icon16.svg',
       tabId,
     });
 
@@ -134,7 +134,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     // 恢复图标
     chrome.action.setIcon({
-      path: 'icons/icon16.png',
+      path: 'icons/icon16.svg',
       tabId,
     });
   }
@@ -242,6 +242,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // 初始化扫描器
 scanner.initialize().then(() => {
   console.log('Scanner initialized');
+}).catch((error) => {
+  console.error('Failed to initialize scanner:', error);
 });
 
 // 导入 indexedDB 供消息处理器使用

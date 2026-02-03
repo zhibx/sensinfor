@@ -189,12 +189,8 @@ class NotificationManager {
    * 根据严重程度获取图标
    */
   private getIconBySeverity(severity: RuleSeverity): string {
-    const iconMap = {
-      high: 'icons/icon-danger.png',
-      medium: 'icons/icon-warning.png',
-      low: 'icons/icon-info.png',
-    };
-    return iconMap[severity] || 'icons/icon48.png';
+    // 使用统一的图标,因为特定的图标文件不存在
+    return 'icons/icon48.svg';
   }
 
   /**
