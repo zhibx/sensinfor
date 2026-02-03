@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
-import { Card, Badge, EmptyState, Button } from '../components';
+import { Card, Badge, EmptyState, Button, ExtractedDataDisplay } from '../components';
 import { DetectionResult } from '@/types/detection';
 import { indexedDB } from '@/storage/indexedDB';
 
@@ -205,6 +205,11 @@ const HistoryItem: React.FC<{ detection: DetectionResult }> = ({ detection }) =>
             <span className="text-gray-500">修复建议: </span>
             <span className="text-gray-700">{detection.remediation}</span>
           </div>
+          {/* 提取的数据展示 */}
+          {detection.evidence?.extractedData && (
+            <ExtractedDataDisplay data={detection.evidence.extractedData} />
+          )}
+
           {detection.evidence?.contentPreview && (
             <div>
               <span className="text-gray-500">内容预览: </span>
