@@ -16,9 +16,11 @@ export const Badge: React.FC<BadgeProps> = ({ type, value, className }) => {
   const getBadgeClass = () => {
     if (type === 'severity') {
       const severityMap: Record<RuleSeverity, string> = {
+        critical: 'bg-red-100 text-red-800 border-red-200',
         high: 'badge-high',
         medium: 'badge-medium',
         low: 'badge-low',
+        info: 'badge-info',
       };
       return severityMap[value as RuleSeverity] || 'badge-info';
     }

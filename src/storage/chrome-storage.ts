@@ -3,7 +3,7 @@
  * 用于存储配置、规则等小量数据
  */
 
-import { ExtensionConfig, DEFAULT_CONFIG } from '@/types/config';
+import { ExtensionConfig, DEFAULT_CONFIG } from '@/types/config.d';
 import { DetectionRule, RuleSet } from '@/types/rule';
 import { STORAGE_KEYS } from '@/config/constants';
 

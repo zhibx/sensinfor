@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Badge } from '../components';
-import { WebhookConfig } from '@/types/config';
+import { WebhookConfig } from '@/types/config.d';
 import { RuleSeverity } from '@/types/rule';
 
 export const Settings: React.FC = () => {

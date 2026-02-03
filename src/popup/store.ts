@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { ExtensionConfig, DEFAULT_CONFIG } from '@/types/config';
+import { ExtensionConfig, DEFAULT_CONFIG } from '@/types/config.d';
 import { DetectionResult, DetectionStatistics, ScanSession } from '@/types/detection';
 import { DetectionRule } from '@/types/rule';
 import { MESSAGE_TYPES } from '@/config/constants';

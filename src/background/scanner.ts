@@ -100,9 +100,11 @@ class ScannerClass {
       completedRules: 0,
       totalFindings: 0,
       findingsBySeverity: {
+        critical: 0,
         high: 0,
         medium: 0,
         low: 0,
+        info: 0,
       },
     };
 

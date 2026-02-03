@@ -3,7 +3,7 @@
  * 负责发送 Webhook 通知
  */
 
-import { WebhookConfig, WebhookEvent } from '@/types/config';
+import { WebhookConfig, WebhookEvent } from '@/types/config.d';
 import { DetectionResult } from '@/types/detection';
 import { RuleSeverity } from '@/types/rule';
 

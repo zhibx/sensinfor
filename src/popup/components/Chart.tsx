@@ -157,7 +157,15 @@ interface PieChartProps {
 }
 
 export const PieChart: React.FC<PieChartProps> = ({ data, options, height }) => {
-  return <Chart type="pie" data={data} options={options} height={height} />;
+  // 确保 datasets 有 label
+  const chartData = {
+    ...data,
+    datasets: data.datasets.map(ds => ({
+      ...ds,
+      label: ds.label || '',
+    })),
+  };
+  return <Chart type="pie" data={chartData} options={options} height={height} />;
 };
 
 // 环形图组件
@@ -176,7 +184,15 @@ interface DoughnutChartProps {
 }
 
 export const DoughnutChart: React.FC<DoughnutChartProps> = ({ data, options, height }) => {
-  return <Chart type="doughnut" data={data} options={options} height={height} />;
+  // 确保 datasets 有 label
+  const chartData = {
+    ...data,
+    datasets: data.datasets.map(ds => ({
+      ...ds,
+      label: ds.label || '',
+    })),
+  };
+  return <Chart type="doughnut" data={chartData} options={options} height={height} />;
 };
 
 // 图表颜色预设

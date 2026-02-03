@@ -26,7 +26,7 @@ class IndexedDBManager {
     }
 
     this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, VERSION);
+      const request = (globalThis as any).indexedDB.open(DB_NAME, VERSION);
 
       request.onerror = () => {
         reject(new Error('Failed to open IndexedDB'));

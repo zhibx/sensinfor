@@ -117,7 +117,9 @@
 
   /* 文本省略 */
   .text-ellipsis {
-    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .text-ellipsis-2 {

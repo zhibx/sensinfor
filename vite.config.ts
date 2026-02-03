@@ -10,6 +10,7 @@ export default defineConfig({
       manifest: './public/manifest.json',
       watchFilePaths: ['src/**/*'],
       browser: 'chrome',
+      disableAutoLaunch: true,
     }),
   ],
   resolve: {
@@ -26,18 +27,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        popup: path.resolve(__dirname, 'src/popup/index.html'),
-        background: path.resolve(__dirname, 'src/background/index.ts'),
-        content: path.resolve(__dirname, 'src/content/index.ts'),
-      },
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-      },
-    },
   },
   server: {
     port: 3000,

@@ -84,10 +84,12 @@ class ContentAnalyzerClass {
     for (const match of commentMatches) {
       const commentData = await this.analyze(match[1]);
       Object.keys(commentData).forEach((key) => {
-        if (commentData[key] && Array.isArray(commentData[key]) && commentData[key].length > 0) {
+        const val = commentData[key];
+        if (val && Array.isArray(val) && val.length > 0) {
+          const existing = extractedData[key];
           extractedData[key] = [
-            ...(extractedData[key] || []),
-            ...commentData[key],
+            ...(Array.isArray(existing) ? existing : []),
+            ...(val as any[]),
           ];
         }
       });
@@ -132,8 +134,13 @@ class ContentAnalyzerClass {
       if (typeof value === 'object' && value !== null) {
         const nested = await this.extractFromObject(value, currentPath);
         Object.keys(nested).forEach((k) => {
-          if (nested[k] && Array.isArray(nested[k]) && nested[k].length > 0) {
-            extractedData[k] = [...(extractedData[k] || []), ...nested[k]];
+          const val = nested[k];
+          if (val && Array.isArray(val) && val.length > 0) {
+            const existing = extractedData[k];
+            extractedData[k] = [
+              ...(Array.isArray(existing) ? existing : []),
+              ...(val as any[]),
+            ];
           }
         });
       }
@@ -142,8 +149,13 @@ class ContentAnalyzerClass {
       if (typeof value === 'string') {
         const stringData = await this.analyze(value);
         Object.keys(stringData).forEach((k) => {
-          if (stringData[k] && Array.isArray(stringData[k]) && stringData[k].length > 0) {
-            extractedData[k] = [...(extractedData[k] || []), ...stringData[k]];
+          const val = stringData[k];
+          if (val && Array.isArray(val) && val.length > 0) {
+            const existing = extractedData[k];
+            extractedData[k] = [
+              ...(Array.isArray(existing) ? existing : []),
+              ...(val as any[]),
+            ];
           }
         });
       }
