@@ -517,116 +517,456 @@ const RuleEditor: React.FC<{
   onCancel: () => void;
 }> = ({ rule: initialRule, onSave, onCancel }) => {
   const [rule, setRule] = useState<DetectionRule>(initialRule);
+  const [activeTab, setActiveTab] = useState<'basic' | 'patterns' | 'validators'>('basic');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 验证至少有一个检测模式
+    if (!rule.patterns || rule.patterns.length === 0) {
+      alert('至少需要添加一个检测模式');
+      return;
+    }
+
     onSave({
       ...rule,
       updatedAt: Date.now(),
     });
   };
 
+  // 添加新的检测模式
+  const handleAddPattern = () => {
+    setRule({
+      ...rule,
+      patterns: [
+        ...rule.patterns,
+        {
+          path: '/',
+          method: 'GET',
+          validators: {
+            statusCode: [200],
+          },
+        },
+      ],
+    });
+  };
+
+  // 删除检测模式
+  const handleRemovePattern = (index: number) => {
+    setRule({
+      ...rule,
+      patterns: rule.patterns.filter((_, i) => i !== index),
+    });
+  };
+
+  // 更新检测模式
+  const handleUpdatePattern = (index: number, updates: Partial<typeof rule.patterns[0]>) => {
+    setRule({
+      ...rule,
+      patterns: rule.patterns.map((p, i) => (i === index ? { ...p, ...updates } : p)),
+    });
+  };
+
+  // 添加正则表达式
+  const handleAddRegex = (patternIndex: number) => {
+    const pattern = rule.patterns[patternIndex];
+    const currentMatches = pattern.validators.contentMatch || [];
+
+    setRule({
+      ...rule,
+      patterns: rule.patterns.map((p, i) =>
+        i === patternIndex
+          ? {
+              ...p,
+              validators: {
+                ...p.validators,
+                contentMatch: [...currentMatches, ''],
+              },
+            }
+          : p
+      ),
+    });
+  };
+
+  // 更新正则表达式
+  const handleUpdateRegex = (patternIndex: number, regexIndex: number, value: string) => {
+    const pattern = rule.patterns[patternIndex];
+    const contentMatch = [...(pattern.validators.contentMatch || [])];
+    contentMatch[regexIndex] = value;
+
+    setRule({
+      ...rule,
+      patterns: rule.patterns.map((p, i) =>
+        i === patternIndex
+          ? {
+              ...p,
+              validators: {
+                ...p.validators,
+                contentMatch,
+              },
+            }
+          : p
+      ),
+    });
+  };
+
+  // 删除正则表达式
+  const handleRemoveRegex = (patternIndex: number, regexIndex: number) => {
+    const pattern = rule.patterns[patternIndex];
+    const contentMatch = (pattern.validators.contentMatch || []).filter((_, i) => i !== regexIndex);
+
+    setRule({
+      ...rule,
+      patterns: rule.patterns.map((p, i) =>
+        i === patternIndex
+          ? {
+              ...p,
+              validators: {
+                ...p.validators,
+                contentMatch: contentMatch.length > 0 ? contentMatch : undefined,
+              },
+            }
+          : p
+      ),
+    });
+  };
+
+  // 测试正则表达式
+  const testRegex = (pattern: string, testString: string): boolean => {
+    try {
+      const regex = new RegExp(pattern);
+      return regex.test(testString);
+    } catch {
+      return false;
+    }
+  };
+
+  // 验证正则表达式语法
+  const validateRegex = (pattern: string): { valid: boolean; error?: string } => {
+    try {
+      new RegExp(pattern);
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: (error as Error).message };
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
-            <h2 className="text-xl font-bold text-gray-900">
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">
               {initialRule.id.startsWith('custom_') ? '新建规则' : '编辑规则'}
             </h2>
+
+            {/* 标签页切换 */}
+            <div className="flex gap-2 border-b border-gray-200 -mb-px">
+              <button
+                type="button"
+                onClick={() => setActiveTab('basic')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'basic'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                基本信息
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('patterns')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'patterns'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                检测模式 ({rule.patterns.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('validators')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'validators'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                正则匹配
+              </button>
+            </div>
           </div>
 
-          <div className="px-6 py-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">规则名称*</label>
-              <input
-                type="text"
-                value={rule.name}
-                onChange={(e) => setRule({ ...rule, name: e.target.value })}
-                className="input"
-                required
-              />
-            </div>
+          <div className="px-6 py-4">
+            {/* 基本信息标签页 */}
+            {activeTab === 'basic' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">规则名称*</label>
+                  <input
+                    type="text"
+                    value={rule.name}
+                    onChange={(e) => setRule({ ...rule, name: e.target.value })}
+                    className="input"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">描述*</label>
-              <textarea
-                value={rule.description}
-                onChange={(e) => setRule({ ...rule, description: e.target.value })}
-                className="input"
-                rows={3}
-                required
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">描述*</label>
+                  <textarea
+                    value={rule.description}
+                    onChange={(e) => setRule({ ...rule, description: e.target.value })}
+                    className="input"
+                    rows={3}
+                    required
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">类别*</label>
-                <select
-                  value={rule.category}
-                  onChange={(e) => setRule({ ...rule, category: e.target.value as RuleCategory })}
-                  className="input"
-                  required
-                >
-                  <option value="leak">泄露</option>
-                  <option value="backup">备份</option>
-                  <option value="api">API</option>
-                  <option value="config">配置</option>
-                  <option value="cloud">云服务</option>
-                  <option value="ci">CI/CD</option>
-                  <option value="framework">框架</option>
-                  <option value="security">安全</option>
-                </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">类别*</label>
+                    <select
+                      value={rule.category}
+                      onChange={(e) => setRule({ ...rule, category: e.target.value as RuleCategory })}
+                      className="input"
+                      required
+                    >
+                      <option value="leak">泄露</option>
+                      <option value="backup">备份</option>
+                      <option value="api">API</option>
+                      <option value="config">配置</option>
+                      <option value="cloud">云服务</option>
+                      <option value="ci">CI/CD</option>
+                      <option value="framework">框架</option>
+                      <option value="security">安全</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">严重程度*</label>
+                    <select
+                      value={rule.severity}
+                      onChange={(e) => setRule({ ...rule, severity: e.target.value as RuleSeverity })}
+                      className="input"
+                      required
+                    >
+                      <option value="high">高危</option>
+                      <option value="medium">中危</option>
+                      <option value="low">低危</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    标签 (逗号分隔)
+                  </label>
+                  <input
+                    type="text"
+                    value={rule.tags.join(', ')}
+                    onChange={(e) =>
+                      setRule({
+                        ...rule,
+                        tags: e.target.value.split(',').map((t) => t.trim()).filter(t => t),
+                      })
+                    }
+                    className="input"
+                    placeholder="例如: git, vcs, source-code"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">修复建议*</label>
+                  <textarea
+                    value={rule.remediation}
+                    onChange={(e) => setRule({ ...rule, remediation: e.target.value })}
+                    className="input"
+                    rows={3}
+                    required
+                  />
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">严重程度*</label>
-                <select
-                  value={rule.severity}
-                  onChange={(e) => setRule({ ...rule, severity: e.target.value as RuleSeverity })}
-                  className="input"
-                  required
-                >
-                  <option value="high">高危</option>
-                  <option value="medium">中危</option>
-                  <option value="low">低危</option>
-                </select>
+            {/* 检测模式标签页 */}
+            {activeTab === 'patterns' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-gray-700">
+                  <strong>路径变量说明:</strong>
+                  <ul className="mt-1 ml-4 list-disc space-y-1">
+                    <li><code className="bg-white px-1">{'{filename}'}</code> - 文件名(不含扩展名)</li>
+                    <li><code className="bg-white px-1">{'{ext}'}</code> - 文件扩展名</li>
+                    <li><code className="bg-white px-1">{'{dir}'}</code> - 目录名</li>
+                  </ul>
+                  <p className="mt-2">例如: <code className="bg-white px-1">/{'{dir}'}/backup.{'{ext}'}</code></p>
+                </div>
+
+                {rule.patterns.map((pattern, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">模式 {index + 1}</h4>
+                      {rule.patterns.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePattern(index)}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          删除
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        URL 路径*
+                      </label>
+                      <input
+                        type="text"
+                        value={pattern.path}
+                        onChange={(e) => handleUpdatePattern(index, { path: e.target.value })}
+                        className="input"
+                        placeholder="例如: /.git/config 或 /backup/{filename}.{ext}"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          HTTP 方法
+                        </label>
+                        <select
+                          value={pattern.method}
+                          onChange={(e) =>
+                            handleUpdatePattern(index, {
+                              method: e.target.value as typeof pattern.method,
+                            })
+                          }
+                          className="input"
+                        >
+                          <option value="GET">GET</option>
+                          <option value="HEAD">HEAD</option>
+                          <option value="POST">POST</option>
+                          <option value="OPTIONS">OPTIONS</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          状态码 (逗号分隔)
+                        </label>
+                        <input
+                          type="text"
+                          value={(pattern.validators.statusCode || []).join(', ')}
+                          onChange={(e) =>
+                            handleUpdatePattern(index, {
+                              validators: {
+                                ...pattern.validators,
+                                statusCode: e.target.value
+                                  .split(',')
+                                  .map((s) => parseInt(s.trim()))
+                                  .filter((n) => !isNaN(n)),
+                              },
+                            })
+                          }
+                          className="input"
+                          placeholder="例如: 200, 201"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <Button type="button" variant="secondary" onClick={handleAddPattern} size="sm">
+                  + 添加检测模式
+                </Button>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                标签 (逗号分隔)
-              </label>
-              <input
-                type="text"
-                value={rule.tags.join(', ')}
-                onChange={(e) =>
-                  setRule({
-                    ...rule,
-                    tags: e.target.value.split(',').map((t) => t.trim()),
-                  })
-                }
-                className="input"
-                placeholder="例如: git, vcs, source-code"
-              />
-            </div>
+            {/* 正则匹配标签页 */}
+            {activeTab === 'validators' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-gray-700">
+                  <strong>正则表达式匹配:</strong> 用于检测响应内容中的特定模式,如密钥、配置信息等。
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">修复建议*</label>
-              <textarea
-                value={rule.remediation}
-                onChange={(e) => setRule({ ...rule, remediation: e.target.value })}
-                className="input"
-                rows={3}
-                required
-              />
-            </div>
+                {rule.patterns.map((pattern, patternIndex) => (
+                  <div key={patternIndex} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900">
+                        模式 {patternIndex + 1}: {pattern.path}
+                      </h4>
+                    </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-gray-700">
-              <strong>提示:</strong> 更高级的规则配置(检测模式、验证器等)需要通过 JSON
-              编辑。导出规则后编辑 JSON 文件,然后重新导入。
-            </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700">
+                          内容匹配规则 ({(pattern.validators.contentMatch || []).length})
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleAddRegex(patternIndex)}
+                          className="text-sm text-primary-600 hover:text-primary-700"
+                        >
+                          + 添加正则
+                        </button>
+                      </div>
+
+                      {(pattern.validators.contentMatch || []).map((regex, regexIndex) => {
+                        const validation = validateRegex(regex);
+                        return (
+                          <div key={regexIndex} className="bg-gray-50 rounded p-3 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1">
+                                <input
+                                  type="text"
+                                  value={regex}
+                                  onChange={(e) =>
+                                    handleUpdateRegex(patternIndex, regexIndex, e.target.value)
+                                  }
+                                  className={`input text-sm font-mono ${
+                                    !validation.valid ? 'border-red-500' : ''
+                                  }`}
+                                  placeholder="正则表达式,如: \\[core\\] 或 api[_-]?key"
+                                />
+                                {!validation.valid && (
+                                  <p className="text-xs text-red-600 mt-1">{validation.error}</p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRegex(patternIndex, regexIndex)}
+                                className="text-red-600 hover:text-red-700 flex-shrink-0 mt-2"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* 正则测试工具 */}
+                            {validation.valid && (
+                              <RegexTester pattern={regex} />
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {(!pattern.validators.contentMatch || pattern.validators.contentMatch.length === 0) && (
+                        <p className="text-sm text-gray-500 italic">暂无正则匹配规则</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
@@ -637,6 +977,58 @@ const RuleEditor: React.FC<{
           </div>
         </form>
       </div>
+    </div>
+  );
+};
+
+// 正则表达式测试工具组件
+const RegexTester: React.FC<{ pattern: string }> = ({ pattern }) => {
+  const [testString, setTestString] = useState('');
+  const [result, setResult] = useState<{ matched: boolean; message: string } | null>(null);
+
+  const handleTest = () => {
+    try {
+      const regex = new RegExp(pattern);
+      const matched = regex.test(testString);
+      setResult({
+        matched,
+        message: matched ? '匹配成功' : '不匹配',
+      });
+    } catch (error) {
+      setResult({
+        matched: false,
+        message: `错误: ${(error as Error).message}`,
+      });
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-200 pt-2 mt-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={testString}
+          onChange={(e) => setTestString(e.target.value)}
+          className="input text-sm flex-1"
+          placeholder="输入测试文本..."
+        />
+        <button
+          type="button"
+          onClick={handleTest}
+          className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
+        >
+          测试
+        </button>
+      </div>
+      {result && (
+        <p
+          className={`text-xs mt-1 ${
+            result.matched ? 'text-green-600' : 'text-gray-600'
+          }`}
+        >
+          {result.message}
+        </p>
+      )}
     </div>
   );
 };
