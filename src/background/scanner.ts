@@ -10,6 +10,7 @@ import { chromeStorage } from '@/storage/chrome-storage';
 import { deduplicationManager } from '@/utils/deduplication';
 import { notificationManager } from '@/utils/notification';
 import { webhookManager } from '@/utils/webhook';
+import { DomainFilter } from '@/utils/domainFilter';
 import { ScanSession, DetectionResult, DetectionTask } from '@/types/detection';
 import { ScanMode } from '@/types/rule';
 import { DEFAULT_DETECTION_RULES } from '@/config/detectionRules';
@@ -82,17 +83,26 @@ class ScannerClass {
   /**
    * 开始扫描
    */
-  async startScan(url: string, mode: ScanMode = 'standard'): Promise<string> {
+  async startScan(url: string, mode: ScanMode = 'standard'): Promise<string | null> {
     await this.initialize();
 
-    const sessionId = this.generateSessionId();
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
     const config = await chromeStorage.getConfig();
+
+    // 检查黑白名单过滤
+    if (!DomainFilter.shouldScan(hostname, config.whitelist)) {
+      console.log(`[Scanner] 域名 ${hostname} 被过滤,跳过扫描`);
+      return null;
+    }
+
+    const sessionId = this.generateSessionId();
 
     // 创建扫描会话
     const session: ScanSession = {
       id: sessionId,
       url,
-      hostname: new URL(url).hostname,
+      hostname,
       startedAt: Date.now(),
       status: 'scanning',
       scanMode: mode,

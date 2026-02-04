@@ -118,10 +118,10 @@ export type WebhookEvent = 'finding' | 'scan_complete' | 'high_risk';
  * 白名单配置
  */
 export interface WhitelistConfig {
-  enabled: boolean;
+  mode: 'all' | 'whitelist' | 'blacklist'; // 扫描模式: 全部扫描 / 仅白名单 / 排除黑名单
   domains: string[]; // 支持通配符: *.example.com
   urls: string[]; // 支持通配符和正则
-  ips: string[]; // IP 地址白名单
+  ips: string[]; // IP 地址列表
   ruleExceptions: Record<string, string[]>; // 规则 ID -> 域名列表
 }
 
@@ -176,7 +176,7 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
   },
   webhooks: [],
   whitelist: {
-    enabled: false,
+    mode: 'all',
     domains: [],
     urls: [],
     ips: [],
