@@ -655,6 +655,820 @@ export const DEFAULT_DETECTION_RULES: DetectionRule[] = [
     createdAt: Date.now(),
     updatedAt: Date.now(),
   },
+
+  // ==================== Spring Boot Actuator 增强 ====================
+  {
+    id: 'springboot-actuator-health',
+    name: 'Spring Boot Actuator /health 端点暴露',
+    description: '检测 /health 端点暴露,可能泄露应用健康状态和依赖信息',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/health',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"status"'],
+        },
+      },
+      {
+        path: '/actuators/health',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"status"'],
+        },
+      },
+    ],
+    remediation: '配置 management.endpoint.health.show-details=never 或限制访问权限。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-beans',
+    name: 'Spring Boot Actuator /beans 端点暴露',
+    description: '检测 /beans 端点暴露,泄露应用的 Bean 配置信息',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/beans',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"beans"', '"contexts"'],
+        },
+      },
+      {
+        path: '/actuators/beans',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"beans"'],
+        },
+      },
+    ],
+    remediation: '禁用 beans 端点或添加安全认证。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-configprops',
+    name: 'Spring Boot Actuator /configprops 端点暴露',
+    description: '检测 /configprops 端点暴露,可能泄露配置属性',
+    category: 'api',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/configprops',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"contexts"', '"properties"'],
+        },
+      },
+    ],
+    remediation: '禁用 configprops 端点或添加安全认证。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-metrics',
+    name: 'Spring Boot Actuator /metrics 端点暴露',
+    description: '检测 /metrics 端点暴露,可能泄露应用性能指标',
+    category: 'api',
+    severity: 'low',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/metrics',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"names"'],
+        },
+      },
+      {
+        path: '/actuators/metrics',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"names"'],
+        },
+      },
+    ],
+    remediation: '限制 metrics 端点的访问权限。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-mappings',
+    name: 'Spring Boot Actuator /mappings 端点暴露',
+    description: '检测 /mappings 端点暴露,泄露所有 URL 映射关系',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/mappings',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"contexts"', '"mappings"'],
+        },
+      },
+      {
+        path: '/actuators/mappings',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"mappings"'],
+        },
+      },
+    ],
+    remediation: '禁用 mappings 端点或添加安全认证。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-threaddump',
+    name: 'Spring Boot Actuator /threaddump 端点暴露',
+    description: '检测 /threaddump 端点暴露,可能泄露线程堆栈信息',
+    category: 'api',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator'],
+    patterns: [
+      {
+        path: '/actuator/threaddump',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json', 'text/plain'],
+          contentMatch: ['"threads"', 'threadState'],
+        },
+      },
+    ],
+    remediation: '禁用 threaddump 端点。这可能泄露敏感信息。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-logfile',
+    name: 'Spring Boot Actuator /logfile 端点暴露',
+    description: '检测 /logfile 端点暴露,可能泄露应用日志文件',
+    category: 'api',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator', 'logs'],
+    patterns: [
+      {
+        path: '/actuator/logfile',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain', 'application/octet-stream'],
+          contentSize: { min: 100 },
+        },
+      },
+    ],
+    remediation: '禁用 logfile 端点或添加安全认证。日志可能包含敏感信息。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-jolokia',
+    name: 'Spring Boot Actuator /jolokia 端点暴露',
+    description: '检测 Jolokia JMX 端点暴露,可能导致远程代码执行',
+    category: 'api',
+    severity: 'critical',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator', 'jmx', 'rce'],
+    patterns: [
+      {
+        path: '/actuator/jolokia',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"request"', '"value"'],
+        },
+      },
+      {
+        path: '/actuators/jolokia',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['jolokia'],
+        },
+      },
+    ],
+    remediation: '立即禁用 Jolokia 端点!这是严重的安全漏洞,可能导致远程代码执行。',
+    references: ['https://jolokia.org/'],
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-prometheus',
+    name: 'Spring Boot Actuator /prometheus 端点暴露',
+    description: '检测 Prometheus 指标端点暴露',
+    category: 'api',
+    severity: 'low',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator', 'prometheus'],
+    patterns: [
+      {
+        path: '/actuator/prometheus',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain'],
+          contentMatch: ['# HELP', '# TYPE'],
+        },
+      },
+      {
+        path: '/actuators/prometheus',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['# TYPE'],
+        },
+      },
+    ],
+    remediation: '限制 Prometheus 端点的访问权限。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'springboot-actuator-bypass',
+    name: 'Spring Boot Actuator 路径绕过检测',
+    description: '检测通过路径绕过技术访问 Actuator 端点',
+    category: 'api',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'actuator', 'bypass'],
+    patterns: [
+      {
+        path: '/.;/actuator/env',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['propertySources'],
+        },
+      },
+      {
+        path: '/..;/actuator/env',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['propertySources'],
+        },
+      },
+      {
+        path: '/actuator/;/env',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['propertySources'],
+        },
+      },
+      {
+        path: '/actuator;/env;.css',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['propertySources'],
+        },
+      },
+    ],
+    remediation: '修复路径规范化问题,禁用 Actuator 端点或添加严格的访问控制。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== Java 配置文件 ====================
+  {
+    id: 'application-properties-leak',
+    name: 'application.properties 配置文件泄露',
+    description: '检测 Spring Boot 配置文件泄露,可能包含数据库密码、API密钥等',
+    category: 'config',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'config'],
+    patterns: [
+      {
+        path: '/application.properties',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain'],
+          contentMatch: ['spring\\.', '='],
+          contentSize: { min: 20 },
+        },
+      },
+      {
+        path: '/config/application.properties',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['spring\\.'],
+        },
+      },
+    ],
+    remediation: '移除配置文件或将其移动到受保护的目录。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'application-yml-leak',
+    name: 'application.yml 配置文件泄露',
+    description: '检测 Spring Boot YAML 配置文件泄露',
+    category: 'config',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['spring-boot', 'java', 'config'],
+    patterns: [
+      {
+        path: '/application.yml',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain', 'application/x-yaml'],
+          contentMatch: ['spring:', 'server:'],
+          contentSize: { min: 20 },
+        },
+      },
+      {
+        path: '/application.yaml',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['spring:'],
+        },
+      },
+      {
+        path: '/config/application.yml',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['spring:'],
+        },
+      },
+    ],
+    remediation: '移除 YAML 配置文件或将其移动到受保护的目录。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== Python 配置文件 ====================
+  {
+    id: 'django-settings-leak',
+    name: 'Django settings.py 配置文件泄露',
+    description: '检测 Django 配置文件泄露,可能包含 SECRET_KEY 等敏感信息',
+    category: 'config',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['django', 'python', 'config'],
+    patterns: [
+      {
+        path: '/settings.py',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain', 'text/x-python'],
+          contentMatch: ['SECRET_KEY', 'DATABASES'],
+          contentSize: { min: 50 },
+        },
+      },
+      {
+        path: '/local_settings.py',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['SECRET_KEY'],
+        },
+      },
+    ],
+    remediation: '移除 settings.py 文件。不要将配置文件暴露在 Web 目录中。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== Node.js 配置文件 ====================
+  {
+    id: 'config-json-leak',
+    name: 'config.json 配置文件泄露',
+    description: '检测 Node.js 配置文件泄露',
+    category: 'config',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['nodejs', 'config'],
+    patterns: [
+      {
+        path: '/config.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentSize: { min: 20 },
+        },
+      },
+      {
+        path: '/config.js',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/javascript', 'text/javascript'],
+          contentMatch: ['module\\.exports', 'export'],
+        },
+      },
+      {
+        path: '/config/default.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+        },
+      },
+    ],
+    remediation: '移除配置文件或限制访问。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== .env 文件绕过检测 ====================
+  {
+    id: 'env-bypass-leak',
+    name: '.env 文件路径绕过检测',
+    description: '检测通过路径绕过技术访问 .env 文件',
+    category: 'config',
+    severity: 'high',
+    enabled: true,
+    builtin: true,
+    tags: ['env', 'config', 'bypass'],
+    patterns: [
+      {
+        path: '/.;/.env',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['[A-Z_]+='],
+          contentSize: { min: 10 },
+        },
+      },
+      {
+        path: '/..;/.env',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['='],
+          contentSize: { min: 10 },
+        },
+      },
+    ],
+    remediation: '修复路径规范化问题,确保 Web 服务器正确处理特殊字符。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== GraphQL 增强检测 ====================
+  {
+    id: 'graphql-endpoint-discovery',
+    name: 'GraphQL 端点发现',
+    description: '检测常见的 GraphQL 端点位置',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['graphql', 'api'],
+    patterns: [
+      {
+        path: '/graphql',
+        method: 'POST',
+        validators: {
+          statusCode: [200, 400],
+          contentType: ['application/json'],
+        },
+      },
+      {
+        path: '/api/graphql',
+        method: 'POST',
+        validators: {
+          statusCode: [200, 400],
+          contentType: ['application/json'],
+        },
+      },
+      {
+        path: '/v1/graphql',
+        method: 'POST',
+        validators: {
+          statusCode: [200, 400],
+          contentType: ['application/json'],
+        },
+      },
+      {
+        path: '/api/v1/graphql',
+        method: 'POST',
+        validators: {
+          statusCode: [200, 400],
+          contentType: ['application/json'],
+        },
+      },
+      {
+        path: '/___graphql',
+        method: 'POST',
+        validators: {
+          statusCode: [200, 400],
+          contentType: ['application/json'],
+        },
+      },
+    ],
+    remediation: '确保 GraphQL 端点有适当的认证和授权机制。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== Source Map 增强检测 ====================
+  {
+    id: 'webpack-sourcemap-leak',
+    name: 'Webpack Source Map 泄露',
+    description: '检测常见位置的 Webpack Source Map 文件泄露',
+    category: 'leak',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['webpack', 'sourcemap', 'frontend'],
+    patterns: [
+      {
+        path: '/static/js/main.js.map',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"sources"', '"mappings"'],
+        },
+      },
+      {
+        path: '/static/js/app.js.map',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"sources"'],
+        },
+      },
+      {
+        path: '/js/app.js.map',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"sources"'],
+        },
+      },
+      {
+        path: '/main.js.map',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"sources"'],
+        },
+      },
+      {
+        path: '/static/js/chunk-vendors.js.map',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"sources"'],
+        },
+      },
+    ],
+    remediation: '不要在生产环境部署 Source Map 文件,或将其放在受保护的位置。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== 数据库备份文件 ====================
+  {
+    id: 'database-backup-leak',
+    name: '数据库备份文件泄露',
+    description: '检测常见的数据库备份文件暴露',
+    category: 'backup',
+    severity: 'critical',
+    enabled: true,
+    builtin: true,
+    tags: ['database', 'backup', 'sql'],
+    patterns: [
+      {
+        path: '/db.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['text/plain', 'application/sql', 'application/octet-stream'],
+          contentMatch: ['INSERT INTO', 'CREATE TABLE', 'DROP TABLE'],
+          contentSize: { min: 100 },
+        },
+      },
+      {
+        path: '/backup.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['INSERT INTO', 'CREATE TABLE'],
+        },
+      },
+      {
+        path: '/database.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['INSERT INTO', 'CREATE TABLE'],
+        },
+      },
+      {
+        path: '/dump.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['INSERT INTO', 'CREATE TABLE'],
+        },
+      },
+      {
+        path: '/db_backup.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['INSERT INTO'],
+        },
+      },
+      {
+        path: '/backup/db.sql',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['INSERT INTO'],
+        },
+      },
+    ],
+    remediation: '立即删除数据库备份文件!这是严重的数据泄露风险。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  // ==================== Swagger 文档增强检测 ====================
+  {
+    id: 'swagger-json-leak',
+    name: 'Swagger JSON 文档泄露',
+    description: '检测 Swagger/OpenAPI JSON 格式文档泄露',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['swagger', 'openapi', 'api'],
+    patterns: [
+      {
+        path: '/swagger.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"swagger"', '"paths"'],
+        },
+      },
+      {
+        path: '/api/swagger.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"paths"'],
+        },
+      },
+      {
+        path: '/v2/api-docs',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentType: ['application/json'],
+          contentMatch: ['"swagger"', '"paths"'],
+        },
+      },
+      {
+        path: '/v3/api-docs',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"openapi"', '"paths"'],
+        },
+      },
+      {
+        path: '/swagger/v1/swagger.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"paths"'],
+        },
+      },
+    ],
+    remediation: '限制对 API 文档的访问,或添加认证机制。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+
+  {
+    id: 'swagger-bypass-leak',
+    name: 'Swagger 文档路径绕过检测',
+    description: '检测通过路径绕过访问 Swagger 文档',
+    category: 'api',
+    severity: 'medium',
+    enabled: true,
+    builtin: true,
+    tags: ['swagger', 'api', 'bypass'],
+    patterns: [
+      {
+        path: '/.;/swagger.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"swagger"', '"paths"'],
+        },
+      },
+      {
+        path: '/..;/swagger.json',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['"paths"'],
+        },
+      },
+      {
+        path: '/.;/swagger-ui.html',
+        method: 'GET',
+        validators: {
+          statusCode: [200],
+          contentMatch: ['swagger-ui'],
+        },
+      },
+    ],
+    remediation: '修复路径规范化问题,限制对 Swagger 文档的访问。',
+    metadata: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
 ];
 
 /**
