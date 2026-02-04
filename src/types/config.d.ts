@@ -3,6 +3,7 @@
  */
 
 import { ScanMode, RuleSeverity } from './rule';
+import { DEFAULT_SECRET_PATTERNS } from '@/config/defaultSecretPatterns';
 
 /**
  * 扩展配置
@@ -227,7 +228,7 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
     analyzers: {
       secretExtraction: {
         enabled: true,
-        customPatterns: [],
+        customPatterns: DEFAULT_SECRET_PATTERNS, // 使用默认密钥规则
       },
       entropyCalculation: {
         enabled: true,
