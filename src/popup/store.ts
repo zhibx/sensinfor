@@ -41,7 +41,7 @@ interface AppState {
   // 操作
   loadConfig: () => Promise<void>;
   loadStatistics: () => Promise<void>;
-  startScan: (url: string) => Promise<string>;
+  startScan: (url: string) => Promise<string | null>;
   stopScan: (sessionId: string) => Promise<void>;
   clearAllData: () => Promise<void>;
 }

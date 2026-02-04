@@ -3,7 +3,7 @@
  * 所有检测器都应继承此类
  */
 
-import { DetectionRule, RulePattern } from '@/types/rule';
+import { DetectionRule, RulePattern, RuleValidator } from '@/types/rule';
 import { DetectionResult, DetectionEvidence } from '@/types/detection';
 import { httpRequest, HttpResponse } from '@/utils/http';
 import { buildDetectionURL, parseURL } from '@/utils/url';
@@ -152,7 +152,7 @@ export abstract class BaseDetector {
   /**
    * 验证响应是否匹配规则
    */
-  protected validateResponse(response: HttpResponse, validators: any): boolean {
+  protected validateResponse(response: HttpResponse, validators: RuleValidator): boolean {
     // 状态码验证
     if (validators.statusCode) {
       if (!validators.statusCode.includes(response.status)) {

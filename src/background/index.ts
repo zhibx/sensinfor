@@ -7,6 +7,7 @@ import { scanner } from './scanner';
 import { chromeStorage } from '@/storage/chrome-storage';
 import { indexedDB } from '@/storage/indexedDB';
 import { notificationManager } from '@/utils/notification';
+import { DomainFilter } from '@/utils/domainFilter';
 import { MESSAGE_TYPES, CONTEXT_MENU_IDS } from '@/config/constants';
 
 // 扩展安装或更新时
@@ -112,9 +113,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       return;
     }
 
-    // 检查白名单
-    const whitelist = await chromeStorage.getWhitelist();
-    if (isWhitelisted(tab.url, whitelist)) {
+    // 检查黑白名单过滤
+    const urlObj = new URL(tab.url);
+    const hostname = urlObj.hostname;
+    if (!DomainFilter.shouldScan(hostname, config.whitelist)) {
       return;
     }
 
@@ -140,38 +142,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     // });
   }
 });
-
-// 检查是否在白名单中
-function isWhitelisted(
-  url: string,
-  whitelist: { domains: string[]; urls: string[]; ips: string[] }
-): boolean {
-  try {
-    const urlObj = new URL(url);
-
-    // 检查域名白名单
-    for (const domain of whitelist.domains) {
-      const pattern = domain.replace(/\*/g, '.*');
-      const regex = new RegExp(`^${pattern}$`, 'i');
-      if (regex.test(urlObj.hostname)) {
-        return true;
-      }
-    }
-
-    // 检查 URL 白名单
-    for (const urlPattern of whitelist.urls) {
-      const pattern = urlPattern.replace(/\*/g, '.*');
-      const regex = new RegExp(`^${pattern}$`, 'i');
-      if (regex.test(url)) {
-        return true;
-      }
-    }
-
-    return false;
-  } catch (error) {
-    return false;
-  }
-}
 
 // 消息处理
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

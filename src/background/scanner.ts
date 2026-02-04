@@ -4,29 +4,22 @@
  */
 
 import { detectorRegistry } from '@/detectors/registry';
-import { DetectorContext } from '@/detectors/base';
+import { DetectorContext, BaseDetector } from '@/detectors/base';
 import { indexedDB } from '@/storage/indexedDB';
 import { chromeStorage } from '@/storage/chrome-storage';
-import { deduplicationManager } from '@/utils/deduplication';
+import { deduplicationManager, SessionDeduplicator } from '@/utils/deduplication';
 import { notificationManager } from '@/utils/notification';
 import { webhookManager } from '@/utils/webhook';
 import { DomainFilter } from '@/utils/domainFilter';
 import { ScanSession, DetectionResult, DetectionTask } from '@/types/detection';
-import { ScanMode } from '@/types/rule';
+import { ScanMode, DetectionRule } from '@/types/rule';
 import { DEFAULT_DETECTION_RULES } from '@/config/detectionRules';
 import {
-  GitDetector,
-  SVNDetector,
-  BackupDetector,
-  EnvDetector,
-  DockerDetector,
-  CIDetector,
-  CloudDetector,
-  APIDetector,
-  FrameworkDetector,
+  createGenericDetector,
   CORSDetector,
   CSPDetector,
 } from '@/detectors/implementations';
+import { GenericDetector } from '@/detectors/genericDetector';
 
 /**
  * 扫描器类
@@ -45,22 +38,14 @@ class ScannerClass {
     await indexedDB.init();
 
     // 注册检测器工厂
-    detectorRegistry.registerFactory('leak', (rule) => {
-      if (rule.id.startsWith('git-')) return new GitDetector(rule);
-      if (rule.id.startsWith('svn-')) return new SVNDetector(rule);
-      return new GitDetector(rule);
-    });
-
-    detectorRegistry.registerFactory('backup', (rule) => new BackupDetector(rule));
-    detectorRegistry.registerFactory('config', (rule) => new EnvDetector(rule));
-    detectorRegistry.registerFactory('ci', (rule) => {
-      if (rule.id.startsWith('docker-')) return new DockerDetector(rule);
-      return new CIDetector(rule);
-    });
-    detectorRegistry.registerFactory('cloud', (rule) => new CloudDetector(rule));
-    detectorRegistry.registerFactory('api', (rule) => new APIDetector(rule));
-    detectorRegistry.registerFactory('framework', (rule) => new FrameworkDetector(rule));
-    detectorRegistry.registerFactory('security', (rule) => {
+    detectorRegistry.registerFactory('leak', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('backup', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('config', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('ci', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('cloud', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('api', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('framework', (rule: DetectionRule) => createGenericDetector(rule));
+    detectorRegistry.registerFactory('security', (rule: DetectionRule) => {
       if (rule.id.includes('cors')) return new CORSDetector(rule);
       if (rule.id.includes('csp')) return new CSPDetector(rule);
       return new CORSDetector(rule);
@@ -164,9 +149,9 @@ class ScannerClass {
    */
   private async runDetection(
     session: ScanSession,
-    detectors: any[],
+    detectors: BaseDetector[],
     context: DetectorContext,
-    dedup: any
+    dedup: SessionDeduplicator
   ): Promise<void> {
     const config = await chromeStorage.getConfig();
 
