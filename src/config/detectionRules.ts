@@ -1491,3 +1491,23 @@ export function getRulesByCategory(category: string): DetectionRule[] {
 export function getRulesBySeverity(severity: string): DetectionRule[] {
   return DEFAULT_DETECTION_RULES.filter((rule) => rule.severity === severity);
 }
+
+/**
+ * 导入增强规则
+ * 增强规则提供更准确的检测和更少的误报
+ */
+import { ENHANCED_DETECTION_RULES, mergeEnhancedRules } from './detectionRules.enhanced';
+
+/**
+ * 合并后的完整规则集（包含增强规则）
+ * 使用此规则集可获得更好的检测效果
+ */
+export const COMPLETE_DETECTION_RULES = mergeEnhancedRules(
+  DEFAULT_DETECTION_RULES,
+  ENHANCED_DETECTION_RULES
+);
+
+/**
+ * 导出增强规则供单独使用
+ */
+export { ENHANCED_DETECTION_RULES };
