@@ -7,11 +7,21 @@ import { REGEX_PATTERNS } from '@/config/constants';
 import { ExtractedData, Secret } from '@/types/detection';
 import { calculateEntropy, scanHighEntropyStrings } from './entropyCalculator';
 import { extractSecretsFromEnv } from './envParser';
+import type { AnalyzerConfig } from '@/types/config.d';
 
 /**
  * 内容分析器类
  */
 class ContentAnalyzerClass {
+  private config: AnalyzerConfig | null = null;
+
+  /**
+   * 设置分析器配置
+   */
+  setConfig(config: AnalyzerConfig) {
+    this.config = config;
+  }
+
   /**
    * 分析响应内容
    */
@@ -35,12 +45,25 @@ class ContentAnalyzerClass {
       extractedData.secrets = extractSecretsFromEnv(content);
     }
 
-    // 通用分析
-    extractedData.secrets = this.extractSecrets(content);
-    extractedData.apiEndpoints = this.extractAPIEndpoints(content);
-    extractedData.internalIps = this.extractInternalIPs(content);
+    // 通用分析 - 根据配置决定是否执行
+    if (this.config?.secretExtraction?.enabled !== false) {
+      extractedData.secrets = this.extractSecrets(content);
+    }
+
+    if (this.config?.contentAnalysis?.extractApiEndpoints !== false) {
+      extractedData.apiEndpoints = this.extractAPIEndpoints(content);
+    }
+
+    if (this.config?.contentAnalysis?.extractInternalIps !== false) {
+      extractedData.internalIps = this.extractInternalIPs(content);
+    }
+
     extractedData.gitRepos = this.extractGitRepos(content);
-    extractedData.emails = this.extractEmails(content);
+
+    if (this.config?.contentAnalysis?.extractEmails !== false) {
+      extractedData.emails = this.extractEmails(content);
+    }
+
     extractedData.awsKeys = this.extractAWSKeys(content);
     extractedData.privateKeys = this.extractPrivateKeys(content);
 
@@ -169,21 +192,52 @@ class ContentAnalyzerClass {
    */
   private extractSecrets(content: string): Secret[] {
     const secrets: Secret[] = [];
-    const highEntropyStrings = scanHighEntropyStrings(content, {
-      threshold: 4.5,
-      minLength: 20,
-      maxLength: 100,
-    });
 
-    highEntropyStrings.forEach((result) => {
-      secrets.push({
-        type: 'high_entropy',
-        value: this.maskValue(result.value),
-        entropy: result.entropy,
-        line: result.line,
-        column: result.column,
+    // 1. 使用熵值检测高熵密钥 (如果启用)
+    if (this.config?.entropyCalculation?.enabled !== false) {
+      const threshold = this.config?.entropyCalculation?.threshold ?? 4.5;
+      const minLength = this.config?.entropyCalculation?.minLength ?? 20;
+
+      const highEntropyStrings = scanHighEntropyStrings(content, {
+        threshold,
+        minLength,
+        maxLength: 100,
       });
-    });
+
+      highEntropyStrings.forEach((result) => {
+        secrets.push({
+          type: 'high_entropy',
+          value: this.maskValue(result.value),
+          entropy: result.entropy,
+          line: result.line,
+          column: result.column,
+        });
+      });
+    }
+
+    // 2. 使用自定义密钥检测规则 (如果启用)
+    if (this.config?.secretExtraction?.customPatterns) {
+      this.config.secretExtraction.customPatterns.forEach((pattern) => {
+        if (!pattern.enabled) return;
+
+        try {
+          const regex = new RegExp(pattern.pattern, 'gi');
+          const matches = content.matchAll(regex);
+
+          for (const match of matches) {
+            const value = match[0];
+            secrets.push({
+              type: pattern.name,
+              value: this.maskValue(value),
+              entropy: calculateEntropy(value),
+              context: `匹配规则: ${pattern.name}`,
+            });
+          }
+        } catch (error) {
+          console.error(`自定义密钥规则 "${pattern.name}" 正则表达式错误:`, error);
+        }
+      });
+    }
 
     return secrets;
   }

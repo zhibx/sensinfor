@@ -129,6 +129,7 @@ class ScannerClass {
         timeout: config.scanning.timeout,
         retryCount: config.scanning.retryCount,
         enableContentAnalysis: config.advanced.enableContentAnalysis,
+        analyzers: config.advanced.analyzers, // 传递分析器配置
       },
     };
 

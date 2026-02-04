@@ -9,6 +9,7 @@ import { httpRequest, HttpResponse } from '@/utils/http';
 import { buildDetectionURL, parseURL } from '@/utils/url';
 import { contentAnalyzer } from '@/analyzers/contentAnalyzer';
 import { riskAssessor } from '@/analyzers/riskAssessor';
+import type { AnalyzerConfig } from '@/types/config.d';
 
 export interface DetectorContext {
   url: string;
@@ -17,6 +18,7 @@ export interface DetectorContext {
     timeout: number;
     retryCount: number;
     enableContentAnalysis: boolean;
+    analyzers?: AnalyzerConfig; // 添加分析器配置
   };
 }
 
@@ -91,6 +93,11 @@ export abstract class BaseDetector {
    */
   async detect(context: DetectorContext): Promise<DetectionResult | null> {
     const { url, config } = context;
+
+    // 设置分析器配置
+    if (config.analyzers) {
+      contentAnalyzer.setConfig(config.analyzers);
+    }
 
     // 对每个模式进行检测
     for (const pattern of this.rule.patterns) {
