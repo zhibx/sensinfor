@@ -259,18 +259,17 @@ class ScannerClass {
    * 是否应该发送通知
    */
   private shouldNotify(severity: string, minSeverity: string): boolean {
-    const severityOrder = { high: 3, medium: 2, low: 1 };
-    return (
-      severityOrder[severity as keyof typeof severityOrder] >=
-      severityOrder[minSeverity as keyof typeof severityOrder]
-    );
+    const severityOrder = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+    const currentLevel = severityOrder[severity as keyof typeof severityOrder] ?? 0;
+    const minLevel = severityOrder[minSeverity as keyof typeof severityOrder] ?? 0;
+    return currentLevel >= minLevel;
   }
 
   /**
    * 生成会话 ID
    */
   private generateSessionId(): string {
-    return `scan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `scan_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 }
 

@@ -198,6 +198,7 @@ class DetectorRegistryClass {
         return detectors.filter((detector) => {
           const rule = detector.getRule();
           return (
+            rule.severity === 'critical' ||
             rule.severity === 'high' ||
             rule.category === 'leak' ||
             rule.patterns.length === 1
@@ -222,14 +223,16 @@ class DetectorRegistryClass {
    */
   sortDetectorsByPriority(detectors: BaseDetector[]): BaseDetector[] {
     const priorityMap = {
+      critical: 4,
       high: 3,
       medium: 2,
       low: 1,
+      info: 0,
     };
 
     return detectors.sort((a, b) => {
-      const priorityA = priorityMap[a.getRule().severity];
-      const priorityB = priorityMap[b.getRule().severity];
+      const priorityA = priorityMap[a.getRule().severity] ?? 0;
+      const priorityB = priorityMap[b.getRule().severity] ?? 0;
       return priorityB - priorityA;
     });
   }

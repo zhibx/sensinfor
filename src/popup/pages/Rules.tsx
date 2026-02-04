@@ -167,7 +167,7 @@ export const Rules: React.FC = () => {
       // 验证并导入规则
       const importedRules = data.rules.map((rule: any) => ({
         ...rule,
-        id: rule.id || `imported_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: rule.id || `imported_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         builtin: false,
         createdAt: rule.createdAt || Date.now(),
         updatedAt: Date.now(),

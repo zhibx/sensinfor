@@ -41,7 +41,7 @@ class ContentAnalyzerClass {
       return this.analyzeHTML(content);
     }
 
-    if (url?.endsWith('.env') || content.includes('=') && content.split('\n').length > 3) {
+    if (url?.endsWith('.env') || (content.includes('=') && content.split('\n').length > 3)) {
       extractedData.secrets = extractSecretsFromEnv(content);
     }
 
