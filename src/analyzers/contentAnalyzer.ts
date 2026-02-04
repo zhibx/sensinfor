@@ -76,7 +76,7 @@ class ContentAnalyzerClass {
   private async analyzeJSON(content: string): Promise<ExtractedData> {
     try {
       const data = JSON.parse(content);
-      return this.extractFromObject(data);
+      return await this.extractFromObject(data);
     } catch (error) {
       return await this.analyze(content);
     }

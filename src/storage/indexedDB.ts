@@ -107,6 +107,10 @@ class IndexedDBManager {
    * 批量添加检测结果
    */
   async addDetections(detections: DetectionResult[]): Promise<void> {
+    if (detections.length === 0) {
+      return Promise.resolve();
+    }
+
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORES.DETECTIONS], 'readwrite');

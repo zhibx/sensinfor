@@ -65,7 +65,7 @@ class WebhookManager {
    */
   async sendToAll(webhooks: WebhookConfig[], event: WebhookEvent, data: any): Promise<void> {
     const promises = webhooks.map((webhook) => this.send(webhook, event, data));
-    await Promise.all(promises);
+    await Promise.allSettled(promises);
   }
 
   /**
