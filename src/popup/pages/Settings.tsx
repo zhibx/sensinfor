@@ -4,14 +4,15 @@
 
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Card, Button, Badge } from '../components';
-import { WebhookConfig } from '@/types/config.d';
+import { Card, Button, Badge, AnalyzerSettings, WhitelistSettings } from '../components';
+import { WebhookConfig, AnalyzerConfig, WhitelistConfig } from '@/types/config.d';
 import { RuleSeverity } from '@/types/rule';
 
 export const Settings: React.FC = () => {
   const { config, updateConfig, clearAllData } = useAppStore();
   const [showWebhookEditor, setShowWebhookEditor] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<WebhookConfig | null>(null);
+  const [activeTab, setActiveTab] = useState<'general' | 'analyzers' | 'whitelist' | 'webhooks' | 'data'>('general');
 
   const handleToggleAutoScan = async () => {
     await updateConfig({
@@ -78,9 +79,83 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const handleUpdateAnalyzers = async (analyzers: AnalyzerConfig) => {
+    await updateConfig({
+      advanced: {
+        ...config.advanced,
+        analyzers,
+      },
+    });
+  };
+
+  const handleUpdateWhitelist = async (whitelist: WhitelistConfig) => {
+    await updateConfig({
+      whitelist,
+    });
+  };
+
   return (
     <>
     <div className="space-y-4">
+      {/* 标签页导航 */}
+      <Card>
+        <div className="flex gap-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'general'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            常规设置
+          </button>
+          <button
+            onClick={() => setActiveTab('analyzers')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'analyzers'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            分析引擎
+          </button>
+          <button
+            onClick={() => setActiveTab('whitelist')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'whitelist'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            黑白名单
+          </button>
+          <button
+            onClick={() => setActiveTab('webhooks')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'webhooks'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Webhook
+          </button>
+          <button
+            onClick={() => setActiveTab('data')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              activeTab === 'data'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            数据管理
+          </button>
+        </div>
+      </Card>
+
+      {/* 常规设置标签页 */}
+      {activeTab === 'general' && (
+        <div className="space-y-4">
       {/* 扫描设置 */}
       <Card title="扫描设置">
         <div className="space-y-4">
@@ -213,13 +288,32 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       </Card>
+        </div>
+      )}
 
-      {/* Webhook 配置 */}
-      <Card
-        title="Webhook 通知"
-        subtitle={`已配置 ${config.webhooks?.length || 0} 个 Webhook`}
-      >
-        <div className="space-y-4">
+      {/* 分析引擎标签页 */}
+      {activeTab === 'analyzers' && config.advanced?.analyzers && (
+        <AnalyzerSettings
+          config={config.advanced.analyzers}
+          onChange={handleUpdateAnalyzers}
+        />
+      )}
+
+      {/* 黑白名单标签页 */}
+      {activeTab === 'whitelist' && (
+        <WhitelistSettings
+          config={config.whitelist}
+          onChange={handleUpdateWhitelist}
+        />
+      )}
+
+      {/* Webhook 标签页 */}
+      {activeTab === 'webhooks' && (
+        <Card
+          title="Webhook 通知"
+          subtitle={`已配置 ${config.webhooks?.length || 0} 个 Webhook`}
+        >
+          <div className="space-y-4">
           {/* Webhook 列表 */}
           {config.webhooks && config.webhooks.length > 0 ? (
             <div className="space-y-2">
@@ -317,7 +411,11 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       </Card>
+      )}
 
+      {/* 数据管理标签页 */}
+      {activeTab === 'data' && (
+        <div className="space-y-4">
       {/* 数据管理 */}
       <Card title="数据管理">
         <div className="space-y-4">
@@ -367,6 +465,8 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       </Card>
+        </div>
+      )}
     </div>
 
     {/* Webhook 编辑器 Modal */}

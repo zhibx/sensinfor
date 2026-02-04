@@ -94,6 +94,57 @@ export interface AdvancedConfig {
   customHeaders: Record<string, string>;
   proxyUrl?: string;
   debug: boolean;
+  // 分析引擎配置
+  analyzers: AnalyzerConfig;
+}
+
+/**
+ * 分析引擎配置
+ */
+export interface AnalyzerConfig {
+  // 密钥提取
+  secretExtraction: {
+    enabled: boolean;
+    customPatterns: SecretPattern[]; // 自定义密钥检测正则
+  };
+  // 熵值计算
+  entropyCalculation: {
+    enabled: boolean;
+    threshold: number; // 熵值阈值
+    minLength: number; // 最小长度
+  };
+  // 内容分析
+  contentAnalysis: {
+    enabled: boolean;
+    extractApiEndpoints: boolean;
+    extractInternalIps: boolean;
+    extractEmails: boolean;
+  };
+  // JavaScript 分析
+  jsAnalysis: {
+    enabled: boolean;
+    detectSourceMaps: boolean;
+    detectDebugCode: boolean;
+    detectConfigObjects: boolean;
+  };
+  // SimHash 去重
+  simhashDedup: {
+    enabled: boolean;
+    threshold: number; // 相似度阈值
+  };
+}
+
+/**
+ * 自定义密钥检测模式
+ */
+export interface SecretPattern {
+  id: string;
+  name: string;
+  description: string;
+  pattern: string; // 正则表达式
+  severity: RuleSeverity;
+  enabled: boolean;
+  createdAt: number;
 }
 
 /**
@@ -173,6 +224,33 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
     enableCspCheck: true,
     customHeaders: {},
     debug: false,
+    analyzers: {
+      secretExtraction: {
+        enabled: true,
+        customPatterns: [],
+      },
+      entropyCalculation: {
+        enabled: true,
+        threshold: 4.5,
+        minLength: 20,
+      },
+      contentAnalysis: {
+        enabled: true,
+        extractApiEndpoints: true,
+        extractInternalIps: true,
+        extractEmails: true,
+      },
+      jsAnalysis: {
+        enabled: true,
+        detectSourceMaps: true,
+        detectDebugCode: true,
+        detectConfigObjects: true,
+      },
+      simhashDedup: {
+        enabled: true,
+        threshold: 0.95,
+      },
+    },
   },
   webhooks: [],
   whitelist: {
