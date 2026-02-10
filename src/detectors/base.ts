@@ -9,7 +9,17 @@ import { httpRequest, HttpResponse } from '@/utils/http';
 import { buildDetectionURL, parseURL } from '@/utils/url';
 import { contentAnalyzer } from '@/analyzers/contentAnalyzer';
 import { riskAssessor } from '@/analyzers/riskAssessor';
+import { matchFileFeature } from '@/config/sensitiveFileFeatures';
+import { quick404Check, get404Detector } from '@/utils/template404Detector';
 import type { AnalyzerConfig } from '@/types/config.d';
+
+/**
+ * 增强的 HTTP 响应接口
+ */
+export interface EnhancedHttpResponse extends HttpResponse {
+  redirectUrl?: string; // 最终重定向到的 URL
+  responseTime?: number; // 响应时间（毫秒）
+}
 
 export interface DetectorContext {
   url: string;
@@ -105,7 +115,7 @@ export abstract class BaseDetector {
         const targetURL = buildDetectionURL(url, pattern.path);
         if (!targetURL) continue;
 
-        const response = await this.makeRequest(targetURL, pattern.method, config.timeout);
+        const response = await this.makeRequest(targetURL, pattern.method, config.timeout) as EnhancedHttpResponse;
 
         if (this.validateResponse(response, pattern.validators)) {
           // 分析内容
@@ -143,17 +153,94 @@ export abstract class BaseDetector {
   }
 
   /**
-   * 发起 HTTP 请求
+   * 发起 HTTP 请求（增强版，支持重定向跟踪和响应时间）
    */
   protected async makeRequest(
     url: string,
     method: string,
     timeout: number
   ): Promise<HttpResponse> {
-    return httpRequest(url, {
-      method: method as 'GET' | 'HEAD' | 'POST',
-      timeout,
-    });
+    const startTime = Date.now();
+
+    try {
+      // 使用 fetch 并支持重定向跟踪
+      const response = await fetch(url, {
+        method: method as 'GET' | 'HEAD' | 'POST',
+        redirect: 'manual', // 手动处理重定向
+        signal: AbortSignal.timeout(timeout),
+        credentials: 'omit',
+      });
+
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+
+      let finalUrl = url;
+      let finalStatus = response.status;
+      let body: string | undefined = undefined;
+
+      // 处理重定向
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = headers['location'];
+        if (location) {
+          // 解析绝对或相对 URL
+          try {
+            finalUrl = new URL(location, url).href;
+          } catch {
+            finalUrl = location;
+          }
+
+          // 对于 HEAD 请求，重定向可能不返回 body
+          if (method === 'HEAD') {
+            return {
+              status: finalStatus,
+              headers,
+              body: '',
+            } as HttpResponse;
+          }
+
+          // 跟随重定向（只跟随一级）
+          try {
+            const redirectResponse = await fetch(finalUrl, {
+              method: method as 'GET' | 'HEAD' | 'POST',
+              redirect: 'follow',
+              signal: AbortSignal.timeout(timeout),
+              credentials: 'omit',
+            });
+            finalStatus = redirectResponse.status;
+
+            const redirectHeaders: Record<string, string> = {};
+            redirectResponse.headers.forEach((value, key) => {
+              redirectHeaders[key] = value;
+            });
+
+            if (method !== 'HEAD') {
+              body = await redirectResponse.text();
+            }
+          } catch {
+            // 重定向失败，使用原始状态
+          }
+        }
+      } else if (method !== 'HEAD') {
+        body = await response.text();
+      }
+
+      const responseTime = Date.now() - startTime;
+
+      return {
+        status: finalStatus,
+        headers,
+        body,
+        redirectUrl: finalUrl !== url ? finalUrl : undefined,
+        responseTime,
+      } as HttpResponse;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeout}ms`);
+      }
+      throw error;
+    }
   }
 
   /**
