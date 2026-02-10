@@ -115,7 +115,7 @@ export abstract class BaseDetector {
         const targetURL = buildDetectionURL(url, pattern.path);
         if (!targetURL) continue;
 
-        const response = await this.makeRequest(targetURL, pattern.method, config.timeout) as EnhancedHttpResponse;
+        const response = await this.makeRequest(targetURL, pattern.method, config.timeout);
 
         if (this.validateResponse(response, pattern.validators)) {
           // 分析内容
@@ -153,94 +153,19 @@ export abstract class BaseDetector {
   }
 
   /**
-   * 发起 HTTP 请求（增强版，支持重定向跟踪和响应时间）
+   * 发起 HTTP 请求（使用现有的 httpRequest 工具）
    */
   protected async makeRequest(
     url: string,
     method: string,
     timeout: number
   ): Promise<HttpResponse> {
-    const startTime = Date.now();
-
-    try {
-      // 使用 fetch 并支持重定向跟踪
-      const response = await fetch(url, {
-        method: method as 'GET' | 'HEAD' | 'POST',
-        redirect: 'manual', // 手动处理重定向
-        signal: AbortSignal.timeout(timeout),
-        credentials: 'omit',
-      });
-
-      const headers: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-
-      let finalUrl = url;
-      let finalStatus = response.status;
-      let body: string | undefined = undefined;
-
-      // 处理重定向
-      if ([301, 302, 303, 307, 308].includes(response.status)) {
-        const location = headers['location'];
-        if (location) {
-          // 解析绝对或相对 URL
-          try {
-            finalUrl = new URL(location, url).href;
-          } catch {
-            finalUrl = location;
-          }
-
-          // 对于 HEAD 请求，重定向可能不返回 body
-          if (method === 'HEAD') {
-            return {
-              status: finalStatus,
-              headers,
-              body: '',
-            } as HttpResponse;
-          }
-
-          // 跟随重定向（只跟随一级）
-          try {
-            const redirectResponse = await fetch(finalUrl, {
-              method: method as 'GET' | 'HEAD' | 'POST',
-              redirect: 'follow',
-              signal: AbortSignal.timeout(timeout),
-              credentials: 'omit',
-            });
-            finalStatus = redirectResponse.status;
-
-            const redirectHeaders: Record<string, string> = {};
-            redirectResponse.headers.forEach((value, key) => {
-              redirectHeaders[key] = value;
-            });
-
-            if (method !== 'HEAD') {
-              body = await redirectResponse.text();
-            }
-          } catch {
-            // 重定向失败，使用原始状态
-          }
-        }
-      } else if (method !== 'HEAD') {
-        body = await response.text();
-      }
-
-      const responseTime = Date.now() - startTime;
-
-      return {
-        status: finalStatus,
-        headers,
-        body,
-        redirectUrl: finalUrl !== url ? finalUrl : undefined,
-        responseTime,
-      } as HttpResponse;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${timeout}ms`);
-      }
-      throw error;
-    }
+    return httpRequest(url, {
+      method: method as 'GET' | 'HEAD' | 'POST',
+      timeout,
+      followRedirects: false, // 手动处理重定向以跟踪最终 URL
+      maxRedirects: 1, // 只跟随一级重定向
+    });
   }
 
   /**
@@ -316,7 +241,161 @@ export abstract class BaseDetector {
       }
     }
 
+    // ============ 新增增强验证器 ============
+
+    // 1. 重定向验证 - 排除重定向到登录页/首页的响应
+    if (validators.redirectNotTo && response.finalURL) {
+      try {
+        const redirectPath = new URL(response.finalURL).pathname.toLowerCase();
+        const shouldNotRedirect = validators.redirectNotTo.some((pattern) => {
+          const regex = new RegExp(pattern, 'i');
+          return regex.test(redirectPath);
+        });
+        if (shouldNotRedirect) return false;
+      } catch {
+        // URL 解析失败，跳过此验证
+      }
+    }
+
+    // 2. 文件魔数验证 - 用于二进制文件
+    if (validators.magicBytes && response.body) {
+      if (!this.validateMagicBytes(response.body, validators.magicBytes)) {
+        return false;
+      }
+    }
+
+    // 3. 响应时间验证
+    if (validators.maxResponseTime && response.timing?.duration) {
+      if (response.timing.duration > validators.maxResponseTime) {
+        return false;
+      }
+    }
+
+    // 4. 敏感文件特征验证
+    if (validators.sensitiveFileFeature && response.body) {
+      const contentType = response.headers['content-type'] || '';
+      const matches = matchFileFeature(
+        contentType,
+        response.body,
+        validators.sensitiveFileFeature.type
+      );
+      if (!matches) return false;
+    }
+
+    // 5. 404 模板相似度验证
+    if (validators.notLike404?.enabled) {
+      const detector = get404Detector(validators.notLike404.threshold);
+      const checkResult = detector.checkIfLike404({
+        statusCode: response.status,
+        body: response.body,
+        headers: response.headers,
+      });
+      if (checkResult.is404) return false;
+    }
+
+    // 6. 结构化验证 - JSON/XML 结构
+    if (validators.structureValidation && response.body) {
+      if (!this.validateStructure(response.body, validators.structureValidation)) {
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  /**
+   * 验证文件魔数（Magic Number）
+   */
+  private validateMagicBytes(
+    body: string,
+    config: { pattern: string; offset?: number; encoding?: 'hex' | 'base64' | 'text' }
+  ): boolean {
+    try {
+      const offset = config.offset || 0;
+      const encoding = config.encoding || 'hex';
+
+      let expectedBytes: Uint8Array;
+
+      // 根据编码解析期望的魔数
+      if (encoding === 'hex') {
+        expectedBytes = this.hexToBytes(config.pattern);
+      } else if (encoding === 'base64') {
+        const binaryString = atob(config.pattern);
+        expectedBytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          expectedBytes[i] = binaryString.charCodeAt(i);
+        }
+      } else {
+        // text 模式直接使用字符串
+        expectedBytes = new TextEncoder().encode(config.pattern);
+      }
+
+      // 获取响应体的前几个字节
+      const bodyBytes = new TextEncoder().encode(body);
+
+      // 比对魔数
+      for (let i = 0; i < expectedBytes.length; i++) {
+        const byteIndex = offset + i;
+        if (byteIndex >= bodyBytes.length) return false;
+        if (bodyBytes[byteIndex] !== expectedBytes[i]) return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.warn('[BaseDetector] Magic bytes validation failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 十六进制字符串转字节数组
+   */
+  private hexToBytes(hex: string): Uint8Array {
+    const bytes = new Uint8Array(Math.ceil(hex.length / 2));
+    for (let i = 0; i < hex.length; i += 2) {
+      const byte = parseInt(hex.substring(i, i + 2), 16);
+      bytes[i / 2] = byte;
+    }
+    return bytes;
+  }
+
+  /**
+   * 验证结构化数据（JSON/XML/YAML）
+   */
+  private validateStructure(
+    body: string,
+    config: { type: 'json' | 'xml' | 'yaml'; requiredKeys?: string[]; optionalKeys?: string[] }
+  ): boolean {
+    try {
+      let data: unknown;
+
+      if (config.type === 'json') {
+        data = JSON.parse(body);
+      } else if (config.type === 'xml') {
+        // 简单的 XML 验证 - 检查是否包含根标签
+        if (!body.trim().startsWith('<')) return false;
+        data = body; // 暂不解析
+      } else if (config.type === 'yaml') {
+        // 简单的 YAML 验证
+        data = body; // 暂不解析
+      }
+
+      // 验证必需的键
+      if (config.requiredKeys && config.requiredKeys.length > 0) {
+        if (config.type === 'json' && typeof data === 'object' && data !== null) {
+          const obj = data as Record<string, unknown>;
+          const hasAllKeys = config.requiredKeys.every((key) => key in obj);
+          if (!hasAllKeys) return false;
+        } else if (config.type === 'xml' || config.type === 'yaml') {
+          const hasAllKeys = config.requiredKeys.every((key) => body.includes(key));
+          if (!hasAllKeys) return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   /**
